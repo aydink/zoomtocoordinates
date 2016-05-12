@@ -84,7 +84,7 @@ class ZoomToCoordinates:
         
         #add rubberbands for cross
         self.crossRb = QgsRubberBand(iface.mapCanvas(),QGis.Line)
-        self.crossRb.setColor(Qt.black)
+        self.crossRb.setColor(Qt.yellow)
 
     def initGui(self):
         # Create action that will start plugin configuration
@@ -259,6 +259,9 @@ class ZoomToCoordinates:
 		print "highlighting.."
 		canvas = self.canvas
 		
+		# clear rubberband
+		self.resetRubberbands()
+		
 		currExt = canvas.extent()
 		
 		leftPt = QgsPoint(currExt.xMinimum(),point.y())
@@ -285,7 +288,8 @@ class ZoomToCoordinates:
 			self.vMarker.show()
 			
 		# wait .5 seconds to simulate a flashing effect
-		QTimer.singleShot(500,self.resetRubberbands)
+		#QTimer.singleShot(1000,self.resetRubberbands)
+		QTimer.singleShot(1000,self.resetCross)
     
     def resetRubberbands(self):
 		print "resetting rubberbands.."
@@ -300,3 +304,6 @@ class ZoomToCoordinates:
 		self.crossRb.reset()
 		print "completed resetting.."
 		
+    def resetCross(self):
+		self.crossRb.reset()
+
