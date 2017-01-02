@@ -140,6 +140,8 @@ class ZoomToCoordinates:
 		mgrs = self.dlg.ui.txtMGRS.text().strip()
 		mgrs = mgrs.replace(" ", "").upper()
 
+		point = None
+
 		if len(mgrs) > 0:
 			try:		
 				ll = pymgrs.MGRStoLL(mgrs)
@@ -148,7 +150,6 @@ class ZoomToCoordinates:
 
 				x = str(ll['lon'])
 				y = str(ll['lat'])
-
 
 			except ValueError as e:
 				self.dlg.ui.mTxtX.setText("")
@@ -166,7 +167,10 @@ class ZoomToCoordinates:
 		print x + "," + y
 		scale = self.spinBox.value()
 		print "scale is - " + str(scale)
-		rect = QgsRectangle(float(x)-scale,float(y)-scale,float(x)+scale,float(y)+scale)
+
+		point = self.transform(QgsPoint(float(x),float(y)))
+		
+		rect = QgsRectangle(point.x()-scale, point.y()-scale, point.x( )+scale, point.y()+scale)
 		self.canvas.setExtent(rect)
 		pt = QgsPoint(float(x),float(y))
 		self.highlight(pt)
@@ -208,9 +212,12 @@ class ZoomToCoordinates:
 		canvas = self.canvas
 		currExt = canvas.extent()
 		
+		point = self.transform(QgsPoint(float(x),float(y)))
+    
+
 		canvasCenter = currExt.center()
-		dx = float(x) - canvasCenter.x()
-		dy = float(y) - canvasCenter.y()
+		dx = point.x() - canvasCenter.x()
+		dy = point.y() - canvasCenter.y()
 		
 		xMin = currExt.xMinimum() + dx
 		xMax = currExt.xMaximum() + dx
@@ -255,7 +262,11 @@ class ZoomToCoordinates:
 		pt = QgsPoint(float(x),float(y))
 		self.highlight(pt)
 			
-    def highlight(self,point):
+    def highlight(self, point):
+		# reproject point from 4326 to map coordinate
+		point = self.transform(point)
+
+
 		print "highlighting.."
 		canvas = self.canvas
 		
@@ -307,3 +318,12 @@ class ZoomToCoordinates:
     def resetCross(self):
 		self.crossRb.reset()
 
+    def transform(self, point):
+		sourceCrs = QgsCoordinateReferenceSystem(4326)
+		destCrs = QgsCoordinateReferenceSystem(self.iface.mapCanvas().mapRenderer().destinationCrs().postgisSrid())
+		xform = QgsCoordinateTransform(sourceCrs, destCrs) #you can also do reverse convertion
+		point = xform.transform(point)
+		print point
+		return point
+		
+        
